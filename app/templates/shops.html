@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+
+{% block title %}Shops - Credit Management{% endblock %}
+
+{% block content %}
+<div class="shops-page">
+    
+        <!-- Step 1: Search for Shop -->
+    <h1>Shops</h1>
+
+    <!-- Filter/Search Section -->
+    <div class="filter-section">
+        <form method="GET" class="filter-form">
+            <div class="form-group">
+                <label>Filter by Zone:</label>
+                <select name="zone" class="form-control" onchange="this.form.submit()">
+                    <option value="">All Zones</option>
+                    {% for zone in zones %}
+                        <option value="{{ zone }}" {% if zone == selected_zone %}selected{% endif %}>
+                            {{ zone }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>Search Shop:</label>
+                <input type="text" name="search" class="form-control" placeholder="Shop name..." value="{{ search_query }}">
+            </div>
+                <div class="form-group">
+                <button type="submit" class="btn btn-primary">Search</button>
+                </div>
+            
+        </form>
+    </div>
+
+
+
+
+
+
+    <!-- Shops Table -->
+    {% if shops %}
+        <div class="card">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Shop Name</th>
+                        <th>Code</th>
+                        <th>Unique Code</th>
+                        <th>Zone</th>
+                        <th>Salesman</th>
+                        <th>Route</th>
+                        <th>Channel</th>
+                        <th>Status</th>
+                        <th>Balance</th>
+                        <th>Contact</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for shop in shops %}
+                    <tr>
+                        <td><strong>{{ shop.retailer_name }}</strong></td>
+                        <td>{{ shop.retailer_code or '--' }}</td>
+                        <td>{{ shop.retailer_unique_code or '--' }}</td>
+                        <td><span class="badge">{{ shop.zone }}</span></td>
+                        <td>{{ shop.salesman_name or '--' }}</td>
+                        <td>{{ shop.route_name or '--' }}</td>
+                        <td>{{ shop.channel or '--' }}</td>
+                        <td>
+                            <span class="status {% if shop.retailer_status == 'Active' %}active{% else %}inactive{% endif %}">
+                                {{ shop.retailer_status }}
+                            </span>
+                        </td>
+                        <td class="balance">₹{{ "%.2f"|format(shop.closing_balance) }}</td>
+                        <td>{{ shop.contact_number or '--' }}</td>
+                        <td>
+                            <a href="{{ url_for('main.order_entry', shop_id=shop.id) }}" class="btn btn-small">
+                                Add Order
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <div class="no-data">
+            <p>No shops found. Try adjusting filters.</p>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

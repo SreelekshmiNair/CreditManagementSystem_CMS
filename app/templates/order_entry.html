@@ -1,0 +1,127 @@
+{% extends "base.html" %}
+
+{% block title %}Enter Order - Credit Management{% endblock %}
+
+{% block content %}
+<div class="order-entry">
+    <div class="order-container">
+        <!-- Left: Shop Details (Read-only) -->
+        <div class="card shop-details">
+            <h2>Shop Details</h2>
+            
+            <div class="detail-row">
+                <span>Name:</span>
+                <strong>{{ shop.retailer_name }}</strong>
+            </div>
+            
+            <div class="detail-row">
+                <span>Code:</span>
+                <strong>{{ shop.retailer_code or '--' }}</strong>
+            </div>
+            
+            <div class="detail-row">
+                <span>Unique Code:</span>
+                <strong>{{ shop.retailer_unique_code or '--' }}</strong>
+            </div>
+            
+            <div class="detail-row">
+                <span>Zone:</span>
+                <strong>{{ shop.zone }}</strong>
+            </div>
+            
+            <div class="detail-row">
+                <span>Salesman:</span>
+                <strong>{{ shop.salesman_name or '--' }}</strong>
+            </div>
+            
+            <div class="detail-row">
+                <span>Route:</span>
+                <strong>{{ shop.route_name or '--' }}</strong>
+            </div>
+            
+            <div class="detail-row">
+                <span>Channel:</span>
+                <strong>{{ shop.channel or '--' }}</strong>
+            </div>
+            
+            <div class="detail-row">
+                <span>Address:</span>
+                <strong>{{ shop.retailer_address or '--' }}</strong>
+            </div>
+            
+            <div class="detail-row">
+                <span>Contact:</span>
+                <strong>{{ shop.contact_number or '--' }}</strong>
+            </div>
+            
+            <div class="detail-row" style="background: #fffbeb; padding: 12px; margin: 12px -24px -24px -24px; border-radius: 0 0 8px 8px;">
+                <span>Current Closing Balance:</span>
+                <strong class="balance" style="font-size: 18px;">₹{{ "%.2f"|format(shop.closing_balance) }}</strong>
+            </div>
+            
+            <a href="{{ url_for('main.new_order') }}" class="btn btn-outline" style="margin-top: 16px; width: 100%;">
+                ← Change Shop
+            </a>
+        </div>
+
+        <!-- Right: Order Form -->
+        <div class="card">
+            <h2>Enter Order Details</h2>
+            
+            <form method="POST" class="form">
+                {{ form.hidden_tag() }}
+
+                <!-- Order Date & Amount -->
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Order Date:</label>
+                        {{ form.order_date(class="form-control") }}
+                        {% if form.order_date.errors %}
+                            <div class="error-message">
+                                {{ form.order_date.errors[0] }}
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="form-group">
+                        <label>Order Amount (₹):</label>
+                        {{ form.order_amount(class="form-control", placeholder="0.00", step="0.01") }}
+                        {% if form.order_amount.errors %}
+                            <div class="error-message">
+                                {{ form.order_amount.errors[0] }}
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Payment Date & Amount -->
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Payment Date:</label>
+                        {{ form.payment_date(class="form-control") }}
+                    </div>
+
+                    <div class="form-group">
+                        <label>Payment Received (₹):</label>
+                        {{ form.payment_amount(class="form-control", placeholder="0.00", step="0.01") }}
+                    </div>
+                </div>
+
+                <!-- Notes -->
+                <div class="form-group">
+                    <label>Notes:</label>
+                    {{ form.notes(class="form-control", rows="3", placeholder="Any notes about this order...") }}
+                </div>
+
+                <!-- Buttons -->
+                <div class="form-actions">
+                    {{ form.submit(class="btn btn-primary btn-large", value="Save Order") }}
+                    <a href="{{ url_for('main.new_order') }}" class="btn btn-outline" style="width: 100%; text-align: center;">
+                        Cancel
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

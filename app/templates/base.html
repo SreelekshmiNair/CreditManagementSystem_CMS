@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head style="background-image: url('static/img/home.jpg')">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Credit Management{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <!-- Navigation Bar -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="{{ url_for('main.dashboard') }}" class="nav-logo">Credit Management System</a>
+            
+            <ul class="nav-menu">
+                {% if current_user.is_authenticated %}
+                    <li><a href="{{ url_for('main.dashboard') }}" class="nav-link">Dashboard</a></li>
+                    <li><a href="{{ url_for('main.shops') }}" class="nav-link">Shops</a></li>
+                    <li><a href="{{ url_for('main.new_order') }}" class="nav-link">New Order</a></li>
+                    <li><a href="{{ url_for('main.view_orders') }}" class="nav-link">View Orders</a></li>
+                                    <span class="nav-divider">|</span>
+                <span class="nav-user">👤 {{ current_user.username }}</span>
+                <a href="{{ url_for('main.logout') }}" class="btn-logout">Logout</a>
+
+                    <!-- <li><a href="{{ url_for('main.logout') }}" class="nav-link logout">Logout</a></li> -->
+                {% endif %}
+            </ul>
+        </div>
+    </nav>
+
+    <!-- Flash Messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }}">
+                    {{ message }}
+                    <button onclick="this.parentElement.style.display='none';" class="close-btn">×</button>
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <!-- Main Content -->
+    <main class="container">
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <p>&copy; 2026 Credit Management System. All rights reserved.</p>
+    </footer>
+</body>
+</html>

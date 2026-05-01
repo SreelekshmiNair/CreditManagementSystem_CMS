@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Credit Management{% endblock %}
+
+{% block content %}
+<div class="dashboard">
+    <h1>Dashboard</h1>
+    
+    <!-- Statistics Cards -->
+    <div class="stats-grid">
+        <div class="dash-card dash-card-blue">
+        <div class="dash-card-icon">🏪</div>
+        <div class="dash-card-body">
+            <div class="dash-card-label">TOTAL SHOPS</div>
+            <div class="dash-card-value">{{ total_shops }}</div>
+        </div>
+    </div>
+
+        <!-- <div class="stat-card">
+            <h3>Today's Orders</h3>
+            <p class="stat-value">{{ today_orders }}</p>
+        </div> -->
+
+        <div class="dash-card dash-card-red">
+        <div class="dash-card-icon">📋</div>
+        <div class="dash-card-body">
+            <div class="dash-card-label">TODAY'S ORDERS</div>
+            <div class="dash-card-value">{{ today_orders }}</div>
+        </div>
+    </div>
+
+        <!-- <div class="stat-card">
+            <h3>Total Orders Amount</h3>
+            <p class="stat-value">₹{{ "%.2f"|format(total_orders_amount) }}</p>
+        </div> -->
+
+        <div class="dash-card dash-card-purple">
+        <div class="dash-card-icon">💰</div>
+        <div class="dash-card-body">
+            <div class="dash-card-label">TOTAL ORDERS AMOUNT</div>
+            <div class="dash-card-value">₹{{ "%.2f"|format(total_orders_amount) }}</div>
+        </div>
+    </div>
+
+        <div class="dash-card dash-card-orange">
+        <div class="dash-card-icon">💰</div>
+        <div class="dash-card-body">
+            <div class="dash-card-label">TOTAL PAYMENTS</div>
+            <div class="dash-card-value">₹{{ "%.2f"|format(total_payments) }}</div>
+        </div>
+    </div>
+
+        <div class="dash-card dash-card-green">
+            <div class="dash-card-icon">⚠️</div>
+            <div class="dash-card-body">
+                <div class="dash-card-label">CLOSING BALANCE</div>
+                <div class="dash-card-value">₹{{ "%.2f"|format(outstanding_balance) }}</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+    <!-- Recent Orders -->
+    <div class="card">
+        <h2>Recent Orders</h2>
+        
+        {% if recent_orders %}
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Shop</th>
+                        <th>Date</th>
+                        <th>Order Amount</th>
+                        <th>Payment</th>
+                        <th>Balance</th>
+                        <th>Entered By</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for order in recent_orders %}
+                    <tr>
+                        <td><strong>{{ order.shop.retailer_name }}</strong></td>
+                        <td>{{ order.order_date.strftime('%d-%m-%Y') }}</td>
+                        <td>₹{{ "%.2f"|format(order.order_amount) }}</td>
+                        <td>₹{{ "%.2f"|format(order.payment_amount) }}</td>
+                        <td class="balance">₹{{ "%.2f"|format(order.order_amount - order.payment_amount) }}</td>
+                        <td>{{ order.user.username }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <p class="no-data">No orders yet.</p>
+        {% endif %}
+    </div>
+
+{% endblock %}

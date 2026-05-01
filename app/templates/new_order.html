@@ -1,0 +1,129 @@
+{% extends "base.html" %}
+
+{% block title %}New Order - Credit Management{% endblock %}
+
+{% block content %}
+<div class="order-entry">
+    {% if not selected_shop %}
+        <!-- Step 1: Search for Shop -->
+        <h1>Create New Order</h1>
+
+        <div class="card">
+            <h2>Search & Select Shop</h2>
+            <form method="POST" class="search-form">
+                {{ form.hidden_tag() }}
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Zone:</label>
+                        {{ form.zone(class="form-control") }}
+                    </div>
+
+                    <div class="form-group">
+                        <label>Shop Name:</label>
+                        {{ form.shop_name(class="form-control", placeholder="Search...") }}
+                    </div>
+
+                    <div class="form-group">
+                        {{ form.submit(class="btn btn-primary") }}
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <!-- Display Search Results -->
+        {% if shops %}
+            <div class="card">
+                <h2>Available Shops</h2>
+                <div class="shops-list">
+                    {% for shop in shops %}
+                        <div class="shop-item">
+                            <div class="shop-info">
+                                <h3>{{ shop.retailer_name }}</h3>
+                                <p>{{ shop.zone }} • {{ shop.salesman_name or 'N/A' }}</p>
+                                <p class="balance">Balance: ₹{{ "%.2f"|format(shop.closing_balance) }}</p>
+                            </div>
+                            <a href="{{ url_for('main.order_entry', shop_id=shop.id) }}" class="btn btn-primary">
+                                Select & Enter Order
+                            </a>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        {% endif %}
+
+    {% else %}
+        <!-- Step 2: Enter Order Details -->
+        <h1>New Order for {{ selected_shop.retailer_name }}</h1>
+
+        <div class="order-container">
+            <!-- Shop Details (Read-only) -->
+            <div class="card shop-details">
+                <h2>Shop Details</h2>
+                <div class="detail-row">
+                    <span>Name:</span> <strong>{{ selected_shop.retailer_name }}</strong>
+                </div>
+                <div class="detail-row">
+                    <span>Code:</span> <strong>{{ selected_shop.retailer_code or '--' }}</strong>
+                </div>
+                <div class="detail-row">
+                    <span>Salesman:</span> <strong>{{ selected_shop.salesman_name or '--' }}</strong>
+                </div>
+                <div class="detail-row">
+                    <span>Route:</span> <strong>{{ selected_shop.route_name or '--' }}</strong>
+                </div>
+                <div class="detail-row">
+                    <span>Current Balance:</span> 
+                    <strong class="balance">₹{{ "%.2f"|format(selected_shop.closing_balance) }}</strong>
+                </div>
+                <a href="{{ url_for('main.new_order') }}" class="btn btn-outline">← Change Shop</a>
+            </div>
+
+            <!-- Order Form -->
+            <div class="card">
+                <h2>Enter Order Details</h2>
+                <form method="POST" action="{{ url_for('main.order_entry', shop_id=selected_shop.id) }}" class="form">
+                    {{ form.hidden_tag() }}
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Order Date:</label>
+                            {{ form.order_date(class="form-control") }}
+                        </div>
+
+                        <div class="form-group">
+                            <label>Order Amount (₹):</label>
+                            {{ form.order_amount(class="form-control", placeholder="0.00") }}
+                            {% if form.order_amount.errors %}
+                                <div class="error">{{ form.order_amount.errors[0] }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Payment Date:</label>
+                            {{ form.payment_date(class="form-control") }}
+                        </div>
+
+                        <div class="form-group">
+                            <label>Payment Received (₹):</label>
+                            {{ form.payment_amount(class="form-control", placeholder="0.00") }}
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Notes:</label>
+                        {{ form.notes(class="form-control", rows="3", placeholder="Any notes...") }}
+                    </div>
+
+                    <div class="form-actions">
+                        {{ form.submit(class="btn btn-primary btn-large") }}
+                        <a href="{{ url_for('main.new_order') }}" class="btn btn-outline">Cancel</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}
