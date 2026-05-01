@@ -1,0 +1,7 @@
+services:
+  - type: web
+    name: creditmanagement
+    env: python
+    pythonVersion: 3.11
+    startCommand: gunicorn wsgi:app
+    buildCommand: pip install -r requirements.txt
