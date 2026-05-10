@@ -6,89 +6,137 @@
 <div class="view-orders">
     <h1>View Orders</h1>
 
-    <!-- Search Section -->
-    
+    <!-- Search Section - Styled like New Order -->
     <div class="card">
         <h2>Search Orders by Shop</h2>
-        <form method="GET" class="search-form">
-            {{ form.hidden_tag() }}
-
+        <form method="GET" class="filter-form">
             <div class="form-row">
                 <div class="form-group">
-                    <label>Zone:</label>
-                    {{ form.zone(class="form-control") }}
-                    </div>
+                    <label for="zone">Zone:</label>
+                    <select name="zone" id="zone" class="form-control" onchange="this.form.submit()">
+                        <option value="">-- All Zones --</option>
+                        {% for zone in zones %}
+                            <option value="{{ zone }}" {% if zone == search_zone %}selected{% endif %}>
+                                {{ zone }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
 
-                    <div class="form-group">
-                        <label>Shop Name:</label>
-                        {{ form.shop_name(class="form-control", placeholder="Search...") }}
-                    </div>
-
-                    <div class="form-group">
-                        {{ form.submit(class="btn btn-primary") }}
+                <div class="form-group">
+                    <label for="search">Shop Name:</label>
+                    <input 
+                        type="text" 
+                        name="search" 
+                        id="search"
+                        class="form-control" 
+                        placeholder="Search by shop name..."
+                        value="{{ search_shop_name }}">
                 </div>
             </div>
+
+                <div class="form-group">
+            <button type="submit" class="btn btn-primary" style="width: 100%;">
+                Search Orders
+            </button>
+                </div>
+            
         </form>
     </div>
 
-    <!-- Orders Display -->
-    {% if selected_shop %}
-        <div class="card">
-            <div class="shop-header">
-                <h2>{{ selected_shop.retailer_name }}</h2>
-                <p class="balance">Closing Balance: <strong>₹{{ "%.2f"|format(selected_shop.closing_balance) }}</strong></p>
+    <!-- Multiple Shops List -->
+    {% if shops %}
+    <div class="card" style="margin-top: 1.5rem;">
+        <h2>Multiple Shops Found - Select One</h2>
+        <div class="shops-list">
+            {% for shop in shops %}
+            <div class="shop-item" style="cursor: pointer; transition: all 0.2s;">
+                <a href="{{ url_for('main.view_orders', shop_id=shop.id) }}" style="text-decoration: none; color: inherit; display: block;">
+                    <div style="display: flex; justify-content: space-between; align-items: start;">
+                        <div>
+                            <h3 style="margin: 0 0 0.5rem 0; color: var(--dark);">{{ shop.retailer_name }}</h3>
+                            <p style="margin: 0.25rem 0; font-size: 0.9rem; color: var(--text-muted);">
+                                <strong>Zone:</strong> <span class="badge badge-zone">{{ shop.zone }}</span>
+                            </p>
+                            <p style="margin: 0.25rem 0; font-size: 0.9rem; color: var(--text-muted);">
+                                <strong>Code:</strong> {{ shop.retailer_code or '—' }}
+                            </p>
+                        </div>
+                        <div style="text-align: right;">
+                            <p style="margin: 0; font-size: 0.85rem; color: var(--text-muted);">Balance</p>
+                            <p style="margin: 0; font-size: 1.2rem; font-weight: 600; color: var(--primary);">
+                                ₹{{ "%.2f"|format(shop.closing_balance) }}
+                            </p>
+                        </div>
+                    </div>
+                </a>
             </div>
+            {% endfor %}
+        </div>
+    </div>
 
-            {% if orders %}
-                <table class="table">
-                    <thead>
-                        <tr>
-                            <th>Date</th>
-                            <th>Order Amount</th>
-                            <th>Payment Date</th>
-                            <th>Payment Amount</th>
-                            <th>Balance</th>
-                            <th>Notes</th>
-                            <th>Entered By</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for order in orders %}
-                        <tr>
-                            <td>{{ order.order_date.strftime('%d-%m-%Y') }}</td>
-                            <td class="amount">₹{{ "%.2f"|format(order.order_amount) }}</td>
-                            <td>{{ order.payment_date.strftime('%d-%m-%Y') if order.payment_date else '--' }}</td>
-                            <td class="amount">₹{{ "%.2f"|format(order.payment_amount) }}</td>
-                            <td class="balance">₹{{ "%.2f"|format(order.order_amount - order.payment_amount) }}</td>
-                            <td>{{ order.notes or '--' }}</td>
-                            <td>{{ order.user.username }}</td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            {% else %}
-                <p class="no-data">No orders for this shop yet.</p>
-            {% endif %}
+    <!-- Single Shop Orders -->
+    {% elif selected_shop %}
+    <div class="card" style="margin-top: 1.5rem;">
+        <div class="shop-header" style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 1.5rem; padding-bottom: 1rem; border-bottom: 1px solid var(--border);">
+            <div>
+                <h2 style="margin: 0 0 0.5rem 0;">{{ selected_shop.retailer_name }}</h2>
+                <p class="text-muted" style="margin: 0 0 0.5rem 0;">
+                    <span class="badge badge-zone">{{ selected_shop.zone }}</span>
+                    • Code: {{ selected_shop.retailer_code or '—' }}
+                </p>
+                <p class="balance" style="margin: 0; font-size: 1.1rem;">
+                    Closing Balance: <strong style="color: var(--primary);">₹{{ "%.2f"|format(selected_shop.closing_balance) }}</strong>
+                </p>
+            </div>
+            <a href="{{ url_for('main.view_orders') }}" class="btn btn-outline">← New Search</a>
         </div>
 
-        <a href="{{ url_for('main.view_orders') }}" class="btn btn-outline">← New Search</a>
-
-    {% elif shops is defined and shops|length > 1 %}
-        <div class="card">
-            <h2>Select a Shop</h2>
-            <div class="shops-list">
-                {% for shop in shops %}
-                    <a href="{{ url_for('main.shop_orders', shop_id=shop.id) }}" class="shop-item">
-                        <h3>{{ shop.retailer_name }}</h3>
-                        <p>Balance: ₹{{ "%.2f"|format(shop.closing_balance) }}</p>
-                    </a>
-                {% endfor %}
-            </div>
+        {% if orders %}
+        <div class="table-responsive">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Order Date</th>
+                        <th>Order Amount</th>
+                        <th>Payment Date</th>
+                        <th>Payment Amount</th>
+                        <th>Balance</th>
+                        <th>Notes</th>
+                        <th>Entered By</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for order in orders %}
+                    <tr>
+                        <td class="text-muted" style="font-weight: 600;">{{ loop.index }}</td>
+                        <td>{{ order.order_date.strftime('%d-%m-%Y') if order.order_date else '—' }}</td>
+                        <td class="amount" style="font-weight: 500;">₹{{ "%.2f"|format(order.order_amount) }}</td>
+                        <td>{{ order.payment_date.strftime('%d-%m-%Y') if order.payment_date else '—' }}</td>
+                        <td class="amount" style="font-weight: 500;">₹{{ "%.2f"|format(order.payment_amount) }}</td>
+                        <td class="balance" style="font-weight: 600;">₹{{ "%.2f"|format(order.order_amount - order.payment_amount) }}</td>
+                        <td class="text-muted" style="max-width: 200px; white-space: normal;">{{ order.notes or '—' }}</td>
+                        <td style="font-weight: 500;">{{ order.user.username }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
         </div>
+        {% else %}
+        <div class="no-data" style="padding: 2rem; text-align: center; background: var(--light); border-radius: var(--radius);">
+            <p style="margin: 0; color: var(--text-muted);">No orders for this shop yet.</p>
+        </div>
+        {% endif %}
+    </div>
+
     {% else %}
-        <div class="no-data">
-            <p>Search for a shop to view orders.</p>
-        </div>
+    <div class="no-data" style="padding: 3rem; text-align: center;">
+        <div style="font-size: 2rem; margin-bottom: 1rem;">🔍</div>
+        <p style="color: var(--text-muted); margin: 0;">
+            Search for a shop to view its orders.
+        </p>
+    </div>
     {% endif %}
 </div>
 {% endblock %}

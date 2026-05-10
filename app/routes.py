@@ -6,7 +6,7 @@ from flask_login import login_user, logout_user, login_required, current_user
 from werkzeug.security import generate_password_hash
 from datetime import date, timedelta
 from app.models import db, User, Shop, Order
-from app.forms import LoginForm, OrderForm, ShopSearchForm
+from app.forms import LoginForm, OrderEntryForm, ShopSearchForm
 
 # Create blueprint (logical grouping of routes)
 app = Blueprint('main', __name__)
@@ -175,35 +175,56 @@ def new_order():
 @app.route('/order/<int:shop_id>/entry', methods=['GET', 'POST'])
 @login_required
 def order_entry(shop_id):
-    """Enter order details for selected shop"""
+    """Enter order and/or payment details for selected shop"""
     
-    # Get shop
     shop = Shop.query.get_or_404(shop_id)
-    form = OrderForm()
+    form = OrderEntryForm()
     
     if form.validate_on_submit():
-        # Create new order
+        # Get amounts - can be None or 0
+        order_amount = form.order_amount.data or 0.0
+        payment_amount = form.payment_amount.data or 0.0
+        
+        # Validate amounts
+        if order_amount < 0:
+            flash('Order Amount cannot be negative', 'danger')
+            return render_template('order_entry.html', shop=shop, form=form)
+        
+        if payment_amount < 0:
+            flash('Payment Amount cannot be negative', 'danger')
+            return render_template('order_entry.html', shop=shop, form=form)
+        
+        # Use provided date or today's date
         order_date = form.order_date.data if form.order_date.data else date.today()
-        order_amount = form.order_amount.data if form.order_amount.data else 0.0
+        
+        # Create new order/payment record
         order = Order(
             shop_id=shop_id,
             user_id=current_user.id,
-            order_date=form.order_date.data,
-            order_amount=form.order_amount.data,
-            payment_amount=form.payment_amount.data or 0,
+            order_date=order_date,
+            order_amount=order_amount,  # Can be 0
+            payment_amount=payment_amount,  # Can be 0
             payment_date=form.payment_date.data,
             notes=form.notes.data
         )
         
+        # Calculate balance change
+        balance_change = order_amount - payment_amount
+        
         # Update shop closing balance
-        balance_change = form.order_amount.data - (form.payment_amount.data or 0)
         shop.closing_balance += balance_change
         
-        # Save to database
         db.session.add(order)
         db.session.commit()
         
-        flash(f'Order saved! New balance: ₹{shop.closing_balance:.2f}', 'success')
+        # Show what was recorded
+        message = []
+        if order_amount > 0:
+            message.append(f'Order: ₹{order_amount:.2f}')
+        if payment_amount > 0:
+            message.append(f'Payment: ₹{payment_amount:.2f}')
+        
+        flash(f'✅ {" + ".join(message)} recorded! Balance: ₹{shop.closing_balance:.2f}', 'success')
         return redirect(url_for('main.new_order'))
     
     return render_template('order_entry.html', shop=shop, form=form)
@@ -213,21 +234,28 @@ def order_entry(shop_id):
 @app.route('/orders', methods=['GET'])
 @login_required
 def view_orders():
-    """View orders for a shop"""
+    """View orders - search and display"""
     
-    form = ShopSearchForm()
-    
-    # Get zones
     zones = db.session.query(Shop.zone).distinct().order_by(Shop.zone).all()
-    zones_list = [z[0] for z in zones if z[0]]
-    form.zone.choices = [('', '-- Select Zone --')] + [(z, z) for z in zones_list]
+    zone_list = [z[0] for z in zones if z[0]]
     
     selected_shop = None
     orders_list = []
+    shops_list = []
+    
+    # Check if shop_id is provided (coming from shop selection)
+    shop_id = request.args.get('shop_id')
+    if shop_id:
+        try:
+            selected_shop = Shop.query.get(int(shop_id))
+            if selected_shop:
+                orders_list = Order.query.filter_by(shop_id=selected_shop.id).order_by(Order.order_date.desc()).all()
+        except:
+            pass
     
     # Handle search
     zone = request.args.get('zone', '').strip()
-    shop_name = request.args.get('shop_name', '').strip()
+    shop_name = request.args.get('search', '').strip()
     
     if zone or shop_name:
         query = Shop.query
@@ -238,25 +266,21 @@ def view_orders():
         if shop_name:
             query = query.filter(Shop.retailer_name.ilike(f'%{shop_name}%'))
         
-        shops_list = query.all()
+        shops_list = query.order_by(Shop.retailer_name).all()
         
+        # If exactly one shop, show its orders
         if len(shops_list) == 1:
-            # Only one shop found - show orders
             selected_shop = shops_list[0]
             orders_list = Order.query.filter_by(shop_id=selected_shop.id).order_by(Order.order_date.desc()).all()
-        elif len(shops_list) > 1:
-            # Multiple shops - show list
-            return render_template('view_orders.html',
-                form=form,
-                shops=shops_list,
-                selected_shop=None,
-                orders=[]
-            )
+            shops_list = []  # Clear list so template doesn't show it
     
     return render_template('view_orders.html',
-        form=form,
+        zones=zone_list,
         selected_shop=selected_shop,
-        orders=orders_list
+        orders=orders_list,
+        shops=shops_list,
+        search_zone=zone if zone else '',
+        search_shop_name=shop_name if shop_name else ''
     )
 
 @app.route('/shop/<int:shop_id>/orders')
