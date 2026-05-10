@@ -26,11 +26,12 @@ class OrderForm(FlaskForm):
     """Form for entering new order"""
     
     order_date = DateField('Order Date',
-        validators=[DataRequired()],
+        validators=[Optional()],
         default=date.today())  # Default to today
     
     order_amount = FloatField('Order Amount (₹)',
-        validators=[DataRequired()])
+        validators=[Optional()],
+        default=0.0) #default to 0.0 so it doesn't show as empty in the form, but user can change it
     
     payment_amount = FloatField('Payment Received (₹)',
         validators=[Optional()],

@@ -68,6 +68,10 @@ from dotenv import load_dotenv
 
 # Load environment variables from .env file
 load_dotenv()
+# if os.environ.get('FLASK_ENV') == 'production':
+#     load_dotenv('.env.prod')
+# else:
+#     load_dotenv('.env.local')
 
 class Config:
     """Base configuration - shared by all environments"""

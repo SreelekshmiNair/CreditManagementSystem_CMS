@@ -183,6 +183,8 @@ def order_entry(shop_id):
     
     if form.validate_on_submit():
         # Create new order
+        order_date = form.order_date.data if form.order_date.data else date.today()
+        order_amount = form.order_amount.data if form.order_amount.data else 0.0
         order = Order(
             shop_id=shop_id,
             user_id=current_user.id,
